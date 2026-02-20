@@ -79,7 +79,7 @@ export default function SoloExpenses() {
     });
   };
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalExpenses = Array.isArray(expenses) ? expenses.reduce((sum, exp) => sum + exp.amount, 0) : 0;
 
   if (loading) {
     return <div className="loading">Loading expenses...</div>;

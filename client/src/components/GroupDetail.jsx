@@ -278,7 +278,7 @@ export default function GroupDetail({ user }) {
   }
 
   const isCreator = group.createdBy.toString() === user.id || group.createdBy === user.id;
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalExpenses = Array.isArray(expenses) ? expenses.reduce((sum, exp) => sum + exp.amount, 0) : 0;
   const hasPendingRequests = group.pendingMembers && group.pendingMembers.length > 0;
 
   return (

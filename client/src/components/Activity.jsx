@@ -12,9 +12,10 @@ export default function Activity() {
   const loadActivities = async () => {
     try {
       const response = await getAllActivities();
-      setActivities(response.data);
+      setActivities(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Failed to load activities:', error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }

@@ -22,9 +22,10 @@ export default function SoloExpenses() {
   const loadExpenses = async () => {
     try {
       const response = await getExpenses();
-      setExpenses(response.data);
+      setExpenses(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Failed to load expenses:', error);
+      setExpenses([]);
     } finally {
       setLoading(false);
     }

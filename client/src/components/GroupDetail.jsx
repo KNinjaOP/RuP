@@ -61,12 +61,14 @@ export default function GroupDetail({ user }) {
         getGroupExpenses(id),
         getGroupBalance(id)
       ]);
-      setGroup(groupRes.data);
-      setExpenses(expensesRes.data);
-      setBalances(balancesRes.data);
+      setGroup(groupRes.data || null);
+      setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : []);
+      setBalances(Array.isArray(balancesRes.data) ? balancesRes.data : []);
     } catch (error) {
       console.error('Failed to load group data:', error);
       setMessage({ type: 'error', text: 'Failed to load group data' });
+      setExpenses([]);
+      setBalances([]);
     } finally {
       setLoading(false);
     }

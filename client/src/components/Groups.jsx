@@ -19,9 +19,10 @@ export default function Groups() {
   const loadGroups = async () => {
     try {
       const response = await getGroups();
-      setGroups(response.data);
+      setGroups(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Failed to load groups:', error);
+      setGroups([]);
     } finally {
       setLoading(false);
     }
@@ -95,6 +96,7 @@ export default function Groups() {
             <div key={group._id} className="group-card" onClick={() => navigate(`/groups/${group._id}`)}>
               <div className="group-header">
                 <div className="group-name">{group.name}</div>
+                <div className="group-code">{group.joinCode}</div>
               </div>
               <div className="group-members">
                 {group.members.length} member{group.members.length !== 1 ? 's' : ''}

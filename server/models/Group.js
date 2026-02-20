@@ -22,6 +22,21 @@ const groupSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  pendingMembers: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    username: String,
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    },
+    expiresAt: {
+      type: Date,
+      required: true
+    }
+  }],
   joinCode: {
     type: String,
     required: true,

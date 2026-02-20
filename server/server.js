@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import expenseRoutes from './routes/expenses.js';
 import groupRoutes from './routes/groups.js';
 import groupExpenseRoutes from './routes/groupExpenses.js';
+import activityRoutes from './routes/activities.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/group-expenses', groupExpenseRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

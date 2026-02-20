@@ -84,7 +84,14 @@ router.post('/login', async (req, res) => {
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password');
-    res.json(user);
+    res.json({
+      id: user._id,
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      theme: user.theme,
+      createdAt: user.createdAt
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

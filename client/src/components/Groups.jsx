@@ -95,7 +95,6 @@ export default function Groups() {
             <div key={group._id} className="group-card" onClick={() => navigate(`/groups/${group._id}`)}>
               <div className="group-header">
                 <div className="group-name">{group.name}</div>
-                <div className="group-code">{group.joinCode}</div>
               </div>
               <div className="group-members">
                 {group.members.length} member{group.members.length !== 1 ? 's' : ''}

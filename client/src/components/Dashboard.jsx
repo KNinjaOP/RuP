@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SoloExpenses from './SoloExpenses';
 import Groups from './Groups';
+import Activity from './Activity';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('solo');
+  // Load last tab from localStorage
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('lastTab') || 'solo';
+  });
+
+  // Save tab when it changes
+  useEffect(() => {
+    localStorage.setItem('lastTab', activeTab);
+  }, [activeTab]);
 
   return (
     <div className="main-content">
@@ -20,9 +29,17 @@ export default function Dashboard() {
         >
           Groups
         </button>
+        <button
+          className={`tab ${activeTab === 'activity' ? 'active' : ''}`}
+          onClick={() => setActiveTab('activity')}
+        >
+          Activity
+        </button>
       </div>
 
-      {activeTab === 'solo' ? <SoloExpenses /> : <Groups />}
+      {activeTab === 'solo' && <SoloExpenses />}
+      {activeTab === 'groups' && <Groups />}
+      {activeTab === 'activity' && <Activity />}
     </div>
   );
 }

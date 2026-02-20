@@ -1,11 +1,32 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getMe, updateTheme } from './api';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import GroupDetail from './components/GroupDetail';
 import './App.css';
+
+function HeaderWithNav({ user, theme, handleThemeToggle, handleLogout }) {
+  const navigate = useNavigate();
+  
+  return (
+    <header className="header">
+      <h1 onClick={() => navigate('/dashboard')}>RuP</h1>
+      <div className="header-actions">
+        <button className="theme-toggle" onClick={handleThemeToggle}>
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
+        <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>
+          {user.username}
+        </span>
+        <button className="btn btn-secondary btn-small" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
+    </header>
+  );
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -63,18 +84,12 @@ function App() {
     <BrowserRouter>
       <div className="app">
         {user && (
-          <header className="header">
-            <h1>RUP Finance Tracker</h1>
-            <div className="header-actions">
-              <button className="theme-toggle" onClick={handleThemeToggle}>
-                {theme === 'light' ? '🌙' : '☀️'} {theme === 'light' ? 'Dark' : 'Light'} Mode
-              </button>
-              <span style={{ color: 'var(--text-secondary)' }}>Hello, {user.username}!</span>
-              <button className="btn btn-secondary btn-small" onClick={handleLogout}>
-                Logout
-              </button>
-            </div>
-          </header>
+          <HeaderWithNav 
+            user={user} 
+            theme={theme} 
+            handleThemeToggle={handleThemeToggle}
+            handleLogout={handleLogout}
+          />
         )}
 
         <Routes>

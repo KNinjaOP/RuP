@@ -8,7 +8,7 @@ const router = express.Router();
 // Get all expenses for user
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const expenses = await Expense.find({ userId: req.userId }).sort({ date: -1 });
+    const expenses = await Expense.find({ userId: req.userId }).sort({ createdAt: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

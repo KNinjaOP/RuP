@@ -8,6 +8,7 @@ export default function SoloExpenses() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
@@ -33,7 +34,8 @@ export default function SoloExpenses() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (submitting) return;
+    setSubmitting(true);
     try {
       if (editingExpense) {
         await updateExpense(editingExpense._id, formData);
@@ -44,6 +46,8 @@ export default function SoloExpenses() {
       closeModal();
     } catch (error) {
       console.error('Failed to save expense:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -155,6 +159,7 @@ export default function SoloExpenses() {
                   step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  onWheel={(e) => e.target.blur()}
                   required
                   min="0"
                 />
@@ -183,8 +188,8 @@ export default function SoloExpenses() {
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingExpense ? 'Update' : 'Add'}
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? 'Saving...' : editingExpense ? 'Update' : 'Add'}
                 </button>
               </div>
             </form>

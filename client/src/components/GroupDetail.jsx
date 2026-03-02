@@ -7,6 +7,7 @@ import {
   updateGroupExpense,
   deleteGroupExpense,
   getGroupBalance,
+  getSettlements,
   recordSettlement,
   regenerateCode,
   removeMember,
@@ -27,6 +28,8 @@ export default function GroupDetail({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [balances, setBalances] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submittingExpense, setSubmittingExpense] = useState(false);
+  const [submittingSettlement, setSubmittingSettlement] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showSettleModal, setShowSettleModal] = useState(false);
   const [showEditNameModal, setShowEditNameModal] = useState(false);
@@ -52,19 +55,22 @@ export default function GroupDetail({ user }) {
   }, [id]);
 
   const [debtStatements, setDebtStatements] = useState([]);
+  const [settlements, setSettlements] = useState([]);
 
   const loadGroupData = async () => {
     try {
       // Clean up expired requests first
       await cleanupExpiredRequests(id);
       
-      const [groupRes, expensesRes, balancesRes] = await Promise.all([
+      const [groupRes, expensesRes, balancesRes, settlementsRes] = await Promise.all([
         getGroup(id),
         getGroupExpenses(id),
-        getGroupBalance(id)
+        getGroupBalance(id),
+        getSettlements(id)
       ]);
       setGroup(groupRes.data || null);
       setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : []);
+      setSettlements(Array.isArray(settlementsRes.data) ? settlementsRes.data : []);
       const balanceData = balancesRes.data;
       console.log('Balance API response:', balanceData);
       if (balanceData && balanceData.balances) {
@@ -86,6 +92,8 @@ export default function GroupDetail({ user }) {
 
   const handleSubmitExpense = async (e) => {
     e.preventDefault();
+    if (submittingExpense) return;
+    setSubmittingExpense(true);
     try {
       if (editingExpense) {
         await updateGroupExpense(id, editingExpense._id, formData);
@@ -99,6 +107,8 @@ export default function GroupDetail({ user }) {
     } catch (error) {
       console.error('Failed to save expense:', error);
       setMessage({ type: 'error', text: 'Failed to save expense' });
+    } finally {
+      setSubmittingExpense(false);
     }
   };
 
@@ -245,6 +255,8 @@ export default function GroupDetail({ user }) {
 
   const handleSubmitSettlement = async (e) => {
     e.preventDefault();
+    if (submittingSettlement) return;
+    setSubmittingSettlement(true);
     try {
       await recordSettlement(id, settleData);
       loadGroupData();
@@ -254,6 +266,8 @@ export default function GroupDetail({ user }) {
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (error) {
       console.error('Failed to record settlement:', error);
+    } finally {
+      setSubmittingSettlement(false);
     }
   };
 
@@ -510,6 +524,30 @@ export default function GroupDetail({ user }) {
         )}
       </div>
 
+      {/* Settlements History */}
+      {settlements.length > 0 && (
+        <div className="card">
+          <h3 style={{ marginBottom: '1rem' }}>Settlements</h3>
+          <div className="expense-list">
+            {settlements.map((s) => (
+              <div key={s._id} className="expense-item">
+                <div className="expense-info">
+                  <div className="expense-title">
+                    💸 {s.from.username} paid {s.to.username}
+                  </div>
+                  <div className="expense-meta">
+                    {new Date(s.date || s.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="expense-amount" style={{ color: 'var(--success)' }}>
+                  ₹{s.amount.toFixed(2)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Edit Name Modal */}
       {showEditNameModal && (
         <div className="modal-overlay" onClick={() => setShowEditNameModal(false)}>
@@ -566,6 +604,7 @@ export default function GroupDetail({ user }) {
                   step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  onWheel={(e) => e.target.blur()}
                   required
                   min="0"
                 />
@@ -628,8 +667,8 @@ export default function GroupDetail({ user }) {
                 <button type="button" className="btn btn-secondary" onClick={closeExpenseModal}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={formData.splitAmong.length === 0}>
-                  {editingExpense ? 'Update' : 'Add'}
+                <button type="submit" className="btn btn-primary" disabled={formData.splitAmong.length === 0 || submittingExpense}>
+                  {submittingExpense ? 'Saving...' : editingExpense ? 'Update' : 'Add'}
                 </button>
               </div>
             </form>
@@ -689,6 +728,7 @@ export default function GroupDetail({ user }) {
                   step="0.01"
                   value={settleData.amount}
                   onChange={(e) => setSettleData({ ...settleData, amount: e.target.value })}
+                  onWheel={(e) => e.target.blur()}
                   required
                   min="0"
                 />
@@ -697,8 +737,8 @@ export default function GroupDetail({ user }) {
                 <button type="button" className="btn btn-secondary" onClick={() => setShowSettleModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-success">
-                  Record Settlement
+                <button type="submit" className="btn btn-success" disabled={submittingSettlement}>
+                  {submittingSettlement ? 'Recording...' : 'Record Settlement'}
                 </button>
               </div>
             </form>

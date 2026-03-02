@@ -6,6 +6,10 @@ const activitySchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  username: {
+    type: String,
+    default: 'Unknown'
+  },
   groupId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'

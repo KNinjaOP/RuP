@@ -63,7 +63,6 @@ router.post('/', authMiddleware, async (req, res) => {
 
     await group.save();
     
-    // Log activity
     await logActivity({
       userId: req.userId,
       groupId: group._id,
@@ -73,6 +72,54 @@ router.post('/', authMiddleware, async (req, res) => {
     });
     
     res.status(201).json(group);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Join group with code — MUST be before /:id routes
+router.post('/join', authMiddleware, async (req, res) => {
+  try {
+    const { joinCode } = req.body;
+    const user = await User.findById(req.userId);
+
+    const group = await Group.findOne({ joinCode: joinCode.toUpperCase() });
+
+    if (!group) {
+      return res.status(404).json({ message: 'Invalid join code' });
+    }
+
+    const isMember = group.members.some(m => m.userId.toString() === req.userId);
+    if (isMember) {
+      return res.status(400).json({ message: 'Already a member of this group' });
+    }
+
+    const hasPendingRequest = group.pendingMembers.some(m => m.userId.toString() === req.userId);
+    if (hasPendingRequest) {
+      return res.status(400).json({ message: 'Join request already pending' });
+    }
+
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    group.pendingMembers.push({
+      userId: req.userId,
+      username: user.username,
+      requestedAt: new Date(),
+      expiresAt
+    });
+
+    await group.save();
+    
+    await logActivity({
+      userId: req.userId,
+      groupId: group._id,
+      type: 'group_joined',
+      action: `Requested to join group "${group.name}"`,
+      details: { groupId: group._id, groupName: group.name, status: 'pending' }
+    });
+    
+    res.json({ message: 'Join request sent. Waiting for approval.', group });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -93,58 +140,6 @@ router.post('/:id/regenerate-code', authMiddleware, async (req, res) => {
     group.joinCode = generateJoinCode();
     await group.save();
     res.json(group);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Join group with code (creates pending request)
-router.post('/join', authMiddleware, async (req, res) => {
-  try {
-    const { joinCode } = req.body;
-    const user = await User.findById(req.userId);
-
-    const group = await Group.findOne({ joinCode: joinCode.toUpperCase() });
-
-    if (!group) {
-      return res.status(404).json({ message: 'Invalid join code' });
-    }
-
-    // Check if already a member
-    const isMember = group.members.some(m => m.userId.toString() === req.userId);
-    if (isMember) {
-      return res.status(400).json({ message: 'Already a member of this group' });
-    }
-
-    // Check if already has pending request
-    const hasPendingRequest = group.pendingMembers.some(m => m.userId.toString() === req.userId);
-    if (hasPendingRequest) {
-      return res.status(400).json({ message: 'Join request already pending' });
-    }
-
-    // Add to pending members with 24-hour expiry
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
-
-    group.pendingMembers.push({
-      userId: req.userId,
-      username: user.username,
-      requestedAt: new Date(),
-      expiresAt
-    });
-
-    await group.save();
-    
-    // Log activity
-    await logActivity({
-      userId: req.userId,
-      groupId: group._id,
-      type: 'group_joined',
-      action: `Requested to join group "${group.name}"`,
-      details: { groupId: group._id, groupName: group.name, status: 'pending' }
-    });
-    
-    res.json({ message: 'Join request sent. Waiting for approval.', group });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

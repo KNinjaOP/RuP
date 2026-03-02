@@ -65,17 +65,18 @@ export default function Activity() {
   };
 
   const renderActivityDetails = (activity) => {
-    // The action field already contains the full description with changes
-    // But let's also show structured details if available
     const details = activity.details;
-    
     if (!details) return null;
 
     const detailItems = [];
-    
-    // Show old vs new values if this was an update
-    if (activity.type === 'expense_updated' && details.oldAmount && details.amount) {
-      if (details.oldAmount !== details.amount) {
+
+    if (activity.type === 'expense_created') {
+      if (details.paidBy) detailItems.push(`Paid by: ${details.paidBy}`);
+      if (details.splitAmong) detailItems.push(`Split among: ${details.splitAmong}`);
+    }
+
+    if (activity.type === 'expense_updated') {
+      if (details.oldAmount && details.amount && details.oldAmount !== details.amount) {
         detailItems.push(`Amount: ₹${details.oldAmount} → ₹${details.amount}`);
       }
       if (details.oldTitle && details.oldTitle !== details.title) {
@@ -86,14 +87,16 @@ export default function Activity() {
       }
     }
 
-    // Show amount for deletions
-    if (activity.type === 'expense_deleted' && details.amount) {
-      detailItems.push(`Amount: ₹${details.amount}`);
+    if (activity.type === 'expense_deleted') {
+      if (details.paidBy) detailItems.push(`Was paid by: ${details.paidBy}`);
+      if (details.splitAmong) detailItems.push(`Was split among: ${details.splitAmong}`);
     }
 
-    // Show split info for group expenses
-    if (details.splitCount) {
-      detailItems.push(`Split ${details.splitCount} ways`);
+    if (activity.type === 'settlement_recorded') {
+      if (details.from && details.to && details.amount) {
+        detailItems.push(`${details.from} → ${details.to}: ₹${details.amount}`);
+      }
+      if (details.recordedBy) detailItems.push(`Recorded by: ${details.recordedBy}`);
     }
 
     if (detailItems.length === 0) return null;

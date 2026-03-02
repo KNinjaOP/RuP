@@ -46,9 +46,9 @@ export const getGroupExpenses = (groupId) => api.get(`/group-expenses/${groupId}
 export const createGroupExpense = (groupId, data) => api.post(`/group-expenses/${groupId}`, data);
 export const updateGroupExpense = (groupId, id, data) => api.put(`/group-expenses/${groupId}/${id}`, data);
 export const deleteGroupExpense = (groupId, id) => api.delete(`/group-expenses/${groupId}/${id}`);
-export const getGroupBalance = (groupId) => api.get(`/group-expenses/${groupId}/balance`);
+export const getGroupBalance = (groupId) => api.get(`/group-expenses/${groupId}/get-balance`);
 export const recordSettlement = (groupId, data) => api.post(`/group-expenses/${groupId}/settle`, data);
-export const getSettlements = (groupId) => api.get(`/group-expenses/${groupId}/settlements`);
+export const getSettlements = (groupId) => api.get(`/group-expenses/${groupId}/get-settlements`);
 
 // Activities
 export const getPersonalActivities = () => api.get('/activities/personal');

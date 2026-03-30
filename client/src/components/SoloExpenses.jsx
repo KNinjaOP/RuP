@@ -39,20 +39,21 @@ function PieChart({ data }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-      <svg viewBox="0 0 200 200" width="180" height="180" style={{ flexShrink: 0 }}>
+      <svg viewBox="0 0 200 200" width="160" height="160" style={{ flexShrink: 0 }}>
         {slices.map((s) => (
           <path key={s.label} d={s.path} fill={s.color} stroke="var(--bg-primary)" strokeWidth="2">
             <title>{s.label}: Rs.{s.value.toFixed(2)} ({s.pct}%)</title>
           </path>
         ))}
       </svg>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: 0 }}>
         {slices.map((s) => (
           <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-            <div style={{ width: 12, height: 12, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
-            <span style={{ color: 'var(--text-secondary)' }}>{s.label}</span>
-            <span style={{ fontWeight: 600, marginLeft: 'auto', paddingLeft: '0.5rem' }}>₹{s.value.toFixed(0)}</span>
-            <span style={{ color: 'var(--text-tertiary)', fontSize: '0.78rem' }}>({s.pct}%)</span>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+            <span style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{s.label}</span>
+            <span style={{ fontWeight: 600, marginLeft: 'auto', paddingLeft: '0.75rem', whiteSpace: 'nowrap' }}>
+              ₹{s.value.toFixed(0)} <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>({s.pct}%)</span>
+            </span>
           </div>
         ))}
       </div>
@@ -61,62 +62,79 @@ function PieChart({ data }) {
 }
 
 function LineChart({ data }) {
-  if (data.length < 2) return (
+  if (data.filter(d => d.total > 0).length < 2) return (
     <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', padding: '1rem 0' }}>
       Add expenses across multiple months to see the trend.
     </div>
   );
 
-  const W = 420, H = 180, PAD = { top: 16, right: 16, bottom: 40, left: 56 };
-  const innerW = W - PAD.left - PAD.right;
-  const innerH = H - PAD.top - PAD.bottom;
+  const H = 160;
+  const PAD = { top: 12, right: 12, bottom: 36, left: 52 };
   const maxVal = Math.max(...data.map(d => d.total), 1);
-  const xStep = innerW / (data.length - 1);
-
-  const pts = data.map((d, i) => ({
-    x: PAD.left + i * xStep,
-    y: PAD.top + innerH - (d.total / maxVal) * innerH,
-    label: d.label,
-    total: d.total,
-  }));
-
-  const polyline = pts.map(p => `${p.x},${p.y}`).join(' ');
-  const area = `M${pts[0].x},${PAD.top + innerH} ` +
-    pts.map(p => `L${p.x},${p.y}`).join(' ') +
-    ` L${pts[pts.length - 1].x},${PAD.top + innerH} Z`;
-
-  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => ({
-    y: PAD.top + innerH - f * innerH,
-    val: (f * maxVal).toFixed(0),
-  }));
+  const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W, overflow: 'visible' }}>
-      <defs>
-        <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {yTicks.map((t, i) => (
-        <g key={i}>
-          <line x1={PAD.left} y1={t.y} x2={PAD.left + innerW} y2={t.y}
-            stroke="var(--border)" strokeWidth="1" strokeDasharray="4,4" />
-          <text x={PAD.left - 6} y={t.y + 4} textAnchor="end"
-            fontSize="10" fill="var(--text-tertiary)">₹{Number(t.val).toLocaleString()}</text>
-        </g>
-      ))}
-      <path d={area} fill="url(#lineGrad)" />
-      <polyline points={polyline} fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinejoin="round" />
-      {pts.map((p, i) => (
-        <g key={i}>
-          <circle cx={p.x} cy={p.y} r="5" fill="#6366f1" stroke="var(--bg-primary)" strokeWidth="2" />
-          <text x={p.x} y={PAD.top + innerH + 18} textAnchor="middle"
-            fontSize="10" fill="var(--text-secondary)">{p.label}</text>
-          <title>{p.label}: ₹{p.total.toFixed(2)}</title>
-        </g>
-      ))}
-    </svg>
+    // overflow hidden on wrapper so it never causes horizontal scroll
+    <div style={{ width: '100%', overflowX: 'hidden' }}>
+      <svg
+        viewBox={`0 0 400 ${H}`}
+        preserveAspectRatio="xMidYMid meet"
+        style={{ width: '100%', height: 'auto', display: 'block' }}
+      >
+        <defs>
+          <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Y grid */}
+        {yTicks.map((f, i) => {
+          const y = PAD.top + (H - PAD.top - PAD.bottom) * (1 - f);
+          const val = (f * maxVal).toFixed(0);
+          return (
+            <g key={i}>
+              <line x1={PAD.left} y1={y} x2={400 - PAD.right} y2={y}
+                stroke="var(--border)" strokeWidth="1" strokeDasharray="4,3" />
+              <text x={PAD.left - 5} y={y + 4} textAnchor="end"
+                fontSize="9" fill="var(--text-tertiary)">₹{Number(val).toLocaleString()}</text>
+            </g>
+          );
+        })}
+
+        {/* Points */}
+        {(() => {
+          const innerW = 400 - PAD.left - PAD.right;
+          const innerH = H - PAD.top - PAD.bottom;
+          const xStep = innerW / (data.length - 1);
+          const pts = data.map((d, i) => ({
+            x: PAD.left + i * xStep,
+            y: PAD.top + innerH - (d.total / maxVal) * innerH,
+            label: d.label,
+            total: d.total,
+          }));
+          const polyline = pts.map(p => `${p.x},${p.y}`).join(' ');
+          const area = `M${pts[0].x},${PAD.top + innerH} ` +
+            pts.map(p => `L${p.x},${p.y}`).join(' ') +
+            ` L${pts[pts.length - 1].x},${PAD.top + innerH} Z`;
+
+          return (
+            <>
+              <path d={area} fill="url(#lineGrad)" />
+              <polyline points={polyline} fill="none" stroke="#6366f1" strokeWidth="2" strokeLinejoin="round" />
+              {pts.map((p, i) => (
+                <g key={i}>
+                  <circle cx={p.x} cy={p.y} r="4" fill="#6366f1" stroke="var(--bg-primary)" strokeWidth="2" />
+                  <text x={p.x} y={H - PAD.bottom + 14} textAnchor="middle"
+                    fontSize="8.5" fill="var(--text-secondary)">{p.label}</text>
+                  <title>{p.label}: ₹{p.total.toFixed(2)}</title>
+                </g>
+              ))}
+            </>
+          );
+        })()}
+      </svg>
+    </div>
   );
 }
 
@@ -213,9 +231,12 @@ export default function SoloExpenses() {
   const lineData = Array.from({ length: 12 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
     const label = d.toLocaleString('default', { month: 'short' }) +
-      (d.getFullYear() !== now.getFullYear() ? ` '${String(d.getFullYear()).slice(2)}` : '');
+      (d.getFullYear() !== now.getFullYear() ? `'${String(d.getFullYear()).slice(2)}` : '');
     const total = expenses
-      .filter(e => { const ed = new Date(e.date); return ed.getMonth() === d.getMonth() && ed.getFullYear() === d.getFullYear(); })
+      .filter(e => {
+        const ed = new Date(e.date);
+        return ed.getMonth() === d.getMonth() && ed.getFullYear() === d.getFullYear();
+      })
       .reduce((s, e) => s + e.amount, 0);
     return { label, total };
   });
@@ -225,35 +246,70 @@ export default function SoloExpenses() {
   if (loading) return <div className="loading">Loading expenses...</div>;
 
   return (
-    <div>
-      {/* Top bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <h2>Solo Expenses</h2>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button className={`btn btn-small ${view === 'list' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('list')}>
-            📋 List
-          </button>
-          <button className={`btn btn-small ${view === 'charts' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setView('charts')}>
-            📊 Charts
-          </button>
-          <button className="btn btn-primary btn-small" onClick={() => setShowModal(true)}>
-            + Add
-          </button>
+    <div style={{ width: '100%', overflowX: 'hidden' }}>
+
+      {/* ── Tab bar ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'var(--bg-primary)',
+        border: '1px solid var(--border)',
+        borderRadius: '12px',
+        padding: '0.4rem 0.6rem',
+        marginBottom: '1.5rem',
+        gap: '0.5rem',
+      }}>
+        {/* Left: view toggles */}
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
+          {[
+            { key: 'list',   label: '📋 List'   },
+            { key: 'charts', label: '📊 Charts' },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setView(key)}
+              style={{
+                padding: '0.45rem 0.9rem',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.88rem',
+                background: view === key ? 'var(--primary)' : 'transparent',
+                color: view === key ? '#fff' : 'var(--text-secondary)',
+                transition: 'all 0.15s',
+              }}
+            >{label}</button>
+          ))}
         </div>
+
+        {/* Right: Add button */}
+        <button
+          className="btn btn-primary btn-small"
+          onClick={() => setShowModal(true)}
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          + Add
+        </button>
       </div>
 
-      {/* Charts view */}
+      {/* ── Charts view ── */}
       {view === 'charts' && (
         <>
+          {/* Month / Year filter */}
           <div className="card" style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Showing:</span>
-              <button className={`btn btn-small ${chartFilter === 'month' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setChartFilter('month')}>
-                This Month
-              </button>
-              <button className={`btn btn-small ${chartFilter === 'year' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setChartFilter('year')}>
-                This Year
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Showing:</span>
+              {['month', 'year'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setChartFilter(f)}
+                  className={`btn btn-small ${chartFilter === f ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  {f === 'month' ? 'This Month' : 'This Year'}
+                </button>
+              ))}
               <span style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>— {filterLabel}</span>
             </div>
           </div>
@@ -272,7 +328,7 @@ export default function SoloExpenses() {
         </>
       )}
 
-      {/* List view */}
+      {/* ── List view ── */}
       {view === 'list' && (
         <>
           {expenses.length === 0 ? (
@@ -288,6 +344,7 @@ export default function SoloExpenses() {
                 const isCollapsed = collapsed[monthKey];
                 return (
                   <div key={monthKey} style={{ marginBottom: '1rem' }}>
+                    {/* Month header */}
                     <div
                       onClick={() => toggleCollapse(monthKey)}
                       style={{
@@ -301,30 +358,40 @@ export default function SoloExpenses() {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <span style={{
-                          fontSize: '0.9rem', display: 'inline-block',
+                          fontSize: '0.85rem', display: 'inline-block',
                           transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
                           transition: 'transform 0.2s'
                         }}>▼</span>
-                        <span style={{ fontWeight: 700, fontSize: '1rem' }}>{monthKey}</span>
-                        <span style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 700 }}>{monthKey}</span>
+                        <span style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>
                           ({group.length} expense{group.length !== 1 ? 's' : ''})
                         </span>
                       </div>
                       <span style={{ fontWeight: 700, color: 'var(--primary)' }}>₹{monthTotal.toFixed(2)}</span>
                     </div>
 
+                    {/* Expenses */}
                     {!isCollapsed && (
-                      <div style={{ border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
+                      <div style={{
+                        border: '1px solid var(--border)', borderTop: 'none',
+                        borderRadius: '0 0 10px 10px', overflow: 'hidden'
+                      }}>
                         {group.map((expense, idx) => (
                           <div
                             key={expense._id}
                             className="expense-item"
-                            style={{ borderBottom: idx < group.length - 1 ? '1px solid var(--border)' : 'none', borderRadius: 0 }}
+                            style={{
+                              borderBottom: idx < group.length - 1 ? '1px solid var(--border)' : 'none',
+                              borderRadius: 0,
+                            }}
                           >
                             <div className="expense-info">
                               <div className="expense-title">{expense.title}</div>
                               <div className="expense-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: TYPE_COLORS[expense.type] || '#64748b' }} />
+                                <span style={{
+                                  display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+                                  background: TYPE_COLORS[expense.type] || '#64748b', flexShrink: 0
+                                }} />
                                 {expense.type} • {new Date(expense.date).toLocaleDateString()}
                               </div>
                             </div>
@@ -350,7 +417,7 @@ export default function SoloExpenses() {
         </>
       )}
 
-      {/* Modal */}
+      {/* ── Modal ── */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
